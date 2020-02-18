@@ -2,7 +2,11 @@ package view
 
 import (
 	"fmt"
+	"io/ioutil"
+	"log"
 	"net/url"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -26,7 +30,7 @@ var indexHTML = `
 			Search User
 		</button>
 		<input id="searched-user" type="text" value="tom" style="width: 140px;"></input>
-		<p><div id = "User">User:</div><img id="avatar" src="F:\Contests\go\githubProfiles\avatar.jpg" width="42" height="42" style="float:right"></p>
+		<p><div id = "User">User:</div><img id="avatar" width="42" height="42" style="float:right" src=""></p>
 		<p id = "Repos Count">Repos Count:</p>
 		<div style="display:inline-block">
 			<p><div id = "Followers">Followers:</div></p>
@@ -46,10 +50,23 @@ func updateField(w webview.WebView, e string, v string) {
 }
 
 func updateAvatar(w webview.WebView, image []byte) {
-	jsCode := `var encoder = new JPEGEncoder(9);
-	var jpgFile = encoder.encode(` + string(image) + `, 9);
-	document.getElementById("avatar").src = jpgFile;	`
+	var jsCode string
+	if len(image) == 0 {
+		jsCode = `document.getElementById("avatar").setAttribute("hidden");`
+	} else {
+		cwd, err := filepath.Abs(filepath.Dir(os.Args[0]))
+		if err != nil {
+			log.Fatal(err)
+		}
+		avatarPath := filepath.Join(cwd, "avatar.jpg")
+		err = ioutil.WriteFile(avatarPath, image, 0644)
+		if err != nil {
+			log.Fatal(err)
+		}
+		jsCode = fmt.Sprintf(`document.getElementById("avatar").src = "%s";`, avatarPath)
+	} 
 	w.Eval(jsCode)
+
 }
 
 func updateListBox(w webview.WebView, listName string, items []string) {
@@ -70,25 +87,24 @@ func handleRPC(w webview.WebView, data string) {
 		userName := strings.TrimPrefix(data, "searchUser:")
 		user, err := controller.GetUserInfo(userName)
 		var userStr, reposCountStr, followersCountStr string
-		//var avatar []byte
+		var avatar []byte
 		var followers, topRepos []string
 		if err == nil {
-			//fmt.Println(user)
 			userStr = user.Username
 			reposCountStr = strconv.Itoa(user.ReposCount)
 			followersCountStr = strconv.Itoa(len(user.Followers))
 			followers = user.Followers
 			topRepos = user.TopRepos
-			//avatar   = user.Avatar
+			avatar   = user.Avatar
 		} else {
-			userStr = err.Error()
+			//userStr = err.Error()
 		}
 		updateField(w, "Repos Count", reposCountStr)
 		updateField(w, "User", userStr)
 		updateField(w, "Followers", followersCountStr)
 		updateListBox(w, "followers-list", followers)
 		updateListBox(w, "top-repos", topRepos)
-		//updateAvatar(w, avatar)
+		updateAvatar(w, avatar)
 	}
 }
 
@@ -100,8 +116,10 @@ func RunGui() {
 		Resizable:              false,
 		URL:                    "data:text/html," + url.PathEscape(indexHTML),
 		ExternalInvokeCallback: handleRPC,
+		Debug: true,
 	})
 	w.SetColor(255, 255, 255, 255)
 	defer w.Exit()
 	w.Run()
+	
 }
