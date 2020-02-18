@@ -2,24 +2,17 @@ package controller
 
 import (
 	"encoding/json"
-	"flag"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
 )
 
-func getUserName() (name string) {
-	flag.StringVar(&name, "n", "selassje", "User name to provide info for")
-	flag.Parse()
-	return
-}
-
 type User struct {
-	username   string
-	avatar     []byte
-	followers  []string
-	reposCount int
+	Username   string
+	Avatar     []byte
+	Followers  []string
+	ReposCount int
 }
 
 func getHttpResponseBody(url string) (body io.Reader, err error) {
@@ -41,7 +34,6 @@ func get(url string) (err error, image []byte) {
 	image, err = ioutil.ReadAll(httpResp.Body)
 	return
 }
-
 
 func performRESTJsonQuery(query string, queryResponse interface{}) (err error) {
 	httpResp, err := http.Get(query)
@@ -72,7 +64,7 @@ func GetUserInfo(username string) (user User, err error) {
 		return
 	}
 
-	//fmt.Println(userQueryResponse)
+	fmt.Println(userQueryResponse)
 	if userQueryResponse.Total_count == 0 {
 		err = fmt.Errorf("User not found")
 		return
@@ -85,7 +77,7 @@ func GetUserInfo(username string) (user User, err error) {
 		return
 	}
 
-	var followersQueryResponse []struct{Login string}
+	var followersQueryResponse []struct{ Login string }
 	err = performRESTJsonQuery(foundUser.Followers_url, &followersQueryResponse)
 	if err != nil {
 		return
@@ -101,12 +93,12 @@ func GetUserInfo(username string) (user User, err error) {
 		return
 	}
 
-	for _, follower := range(followersQueryResponse) {
-		user.followers = append(user.followers, follower.Login)
+	for _, follower := range followersQueryResponse {
+		user.Followers = append(user.Followers, follower.Login)
 	}
-	user.username = foundUser.Login
-	user.avatar =  avatar
-	user.reposCount = len(reposQueryResponse)
+	user.Username = foundUser.Login
+	user.Avatar = avatar
+	user.ReposCount = len(reposQueryResponse)
 
 	return
 }

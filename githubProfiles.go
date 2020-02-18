@@ -2,10 +2,8 @@ package main
 
 import (
 	"flag"
-	"fmt"
-	"log"
 
-	"github.com/selassje/githubProfiles/controller"
+	"github.com/selassje/githubProfiles/view"
 )
 
 func getUserName() (name string) {
@@ -15,10 +13,5 @@ func getUserName() (name string) {
 }
 
 func main() {
-	userName := getUserName()
-	user, err := controller.GetUserInfo(userName)
-	if err != nil {
-		log.Fatal("Could not perform query for username `" + userName + "`." + " with error `" + err.Error() + "`")
-	}
-	fmt.Print(user)
+	view.RunGui()
 }
