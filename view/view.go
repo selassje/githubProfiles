@@ -1,6 +1,7 @@
 package view
 
 import (
+	"fmt"
 	"net/url"
 	"strconv"
 	"strings"
@@ -10,8 +11,8 @@ import (
 )
 
 const (
-	windowWidth  = 260
-	windowHeight = 260
+	windowWidth  = 270
+	windowHeight = 250
 )
 
 var indexHTML = `
@@ -24,11 +25,17 @@ var indexHTML = `
 		<button onclick="external.invoke('searchUser:'+document.getElementById('searched-user').value)">
 			Search User
 		</button>
-		<input id="searched-user" type="text" value="selassje"></input>
+		<input id="searched-user" type="text" value="tom" style="width: 140px;"></input>
 		<p><div id = "User">User:</div><img id="avatar" src="F:\Contests\go\githubProfiles\avatar.jpg" width="42" height="42" style="float:right"></p>
 		<p id = "Repos Count">Repos Count:</p>
-		<p><div id = "Followers">Followers:</div></p>
-		<select id="followers-list" size="5" name ="FollowersList" hidden></select><select id="top-repos" size="4" name ="TopReposList" hidden></select>  
+		<div style="display:inline-block">
+			<p><div id = "Followers">Followers:</div></p>
+			<select id="followers-list" size="5" name ="FollowersList" style="width: 120px"></select>
+		</div>
+		<div style="display:inline-block; float:right;">
+			<p>Top Repos:</p>
+			<select id="top-repos" size="5" name ="TopReposList" style="width: 120px"></select>
+		</div> 
 	</body>
 </html>
 `
@@ -45,16 +52,13 @@ func updateAvatar(w webview.WebView, image []byte) {
 	w.Eval(jsCode)
 }
 
-func updateFollowers(w webview.WebView, followers []string) {
-	var jsCode string
-	if len(followers) == 0 {
-		jsCode = `document.getElementById("followers-list").setAttribute("hidden");`
-	} else {
-		jsCode = `document.getElementById("followers-list").removeAttribute("hidden");`
-		for _, follower := range followers {
-			jsCode += ` var option = document.createElement("option");
-			            option.innerHTML = "` + follower + `";
-						document.getElementById("followers-list").appendChild(option);`
+func updateListBox(w webview.WebView, listName string, items []string) {
+	jsCode := fmt.Sprintf(`document.getElementById("%s").innerHTML="";`, listName)
+	if len(items) != 0 {
+		for _, item := range items {
+			jsCode += fmt.Sprintf(`var option = document.createElement("option");
+			                       option.innerHTML = "%s";
+					               document.getElementById("%s").appendChild(option);`, item, listName)
 		}
 	}
 	w.Eval(jsCode)
@@ -67,21 +71,23 @@ func handleRPC(w webview.WebView, data string) {
 		user, err := controller.GetUserInfo(userName)
 		var userStr, reposCountStr, followersCountStr string
 		//var avatar []byte
-		var followers []string
+		var followers, topRepos []string
 		if err == nil {
 			//fmt.Println(user)
 			userStr = user.Username
 			reposCountStr = strconv.Itoa(user.ReposCount)
 			followersCountStr = strconv.Itoa(len(user.Followers))
 			followers = user.Followers
+			topRepos = user.TopRepos
 			//avatar   = user.Avatar
 		} else {
-			userStr = "User " + userName + " not found"
+			userStr = err.Error()
 		}
 		updateField(w, "Repos Count", reposCountStr)
 		updateField(w, "User", userStr)
-		updateField(w, "Followers",followersCountStr)
-		updateFollowers(w, followers)
+		updateField(w, "Followers", followersCountStr)
+		updateListBox(w, "followers-list", followers)
+		updateListBox(w, "top-repos", topRepos)
 		//updateAvatar(w, avatar)
 	}
 }

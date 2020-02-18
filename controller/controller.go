@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"math"
 	"net/http"
 )
 
@@ -13,6 +14,7 @@ type User struct {
 	Avatar     []byte
 	Followers  []string
 	ReposCount int
+	TopRepos   []string
 }
 
 func getHttpResponseBody(url string) (body io.Reader, err error) {
@@ -71,7 +73,7 @@ func GetUserInfo(username string) (user User, err error) {
 	}
 
 	foundUser := userQueryResponse.Items[0]
-	var reposQueryResponse []struct{}
+	var reposQueryResponse []struct{ Name string }
 	err = performRESTJsonQuery(foundUser.Repos_url, &reposQueryResponse)
 	if err != nil {
 		return
@@ -96,9 +98,12 @@ func GetUserInfo(username string) (user User, err error) {
 	for _, follower := range followersQueryResponse {
 		user.Followers = append(user.Followers, follower.Login)
 	}
+	topReposLimit := int(math.Min(4, float64(len(reposQueryResponse))))
+	for _, repo := range reposQueryResponse[:topReposLimit] {
+		user.TopRepos = append(user.TopRepos, repo.Name)
+	}
 	user.Username = foundUser.Login
 	user.Avatar = avatar
 	user.ReposCount = len(reposQueryResponse)
-
 	return
 }
