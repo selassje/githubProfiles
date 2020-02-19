@@ -66,7 +66,6 @@ func GetUserInfo(username string) (user User, err error) {
 		return
 	}
 
-	fmt.Println(userQueryResponse)
 	if userQueryResponse.Total_count == 0 {
 		err = fmt.Errorf("User not found")
 		return

@@ -1,12 +1,9 @@
 package view
 
 import (
+	"encoding/base64"
 	"fmt"
-	"io/ioutil"
-	"log"
 	"net/url"
-	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -30,7 +27,7 @@ var indexHTML = `
 			Search User
 		</button>
 		<input id="searched-user" type="text" value="tom" style="width: 140px;"></input>
-		<p><div id = "User">User:</div><img id="avatar" width="42" height="42" style="float:right" src=""></p>
+		<p><div id = "User">User:</div><img id="avatar" width="42" height="42" style="float:right" src="" hidden></p>
 		<p id = "Repos Count">Repos Count:</p>
 		<div style="display:inline-block">
 			<p><div id = "Followers">Followers:</div></p>
@@ -54,20 +51,11 @@ func updateAvatar(w webview.WebView, image []byte) {
 	if len(image) == 0 {
 		jsCode = `document.getElementById("avatar").setAttribute("hidden");`
 	} else {
-		cwd, err := filepath.Abs(filepath.Dir(os.Args[0]))
-		if err != nil {
-			log.Fatal(err)
-		}
-		avatarPath := filepath.Join(cwd, "avatar.jpg")
-		err = ioutil.WriteFile(avatarPath, image, 0644)
-		if err != nil {
-			log.Fatal(err)
-		}
+		avatarPath := "data:image/jpg;base64," + base64.StdEncoding.EncodeToString(image)
 		jsCode = `document.getElementById("avatar").removeAttribute("hidden");`
 		jsCode += fmt.Sprintf(`document.getElementById("avatar").src = "%s";`, avatarPath)
 	} 
 	w.Eval(jsCode)
-
 }
 
 func updateListBox(w webview.WebView, listName string, items []string) {
@@ -97,9 +85,7 @@ func handleRPC(w webview.WebView, data string) {
 			followers = user.Followers
 			topRepos = user.TopRepos
 			avatar   = user.Avatar
-		} else {
-			//userStr = err.Error()
-		}
+		} 
 		updateField(w, "Repos Count", reposCountStr)
 		updateField(w, "User", userStr)
 		updateField(w, "Followers", followersCountStr)
