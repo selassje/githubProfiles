@@ -54,7 +54,7 @@ func updateAvatar(w webview.WebView, image []byte) {
 		avatarPath := "data:image/jpg;base64," + base64.StdEncoding.EncodeToString(image)
 		jsCode = `document.getElementById("avatar").removeAttribute("hidden");`
 		jsCode += fmt.Sprintf(`document.getElementById("avatar").src = "%s";`, avatarPath)
-	} 
+	}
 	w.Eval(jsCode)
 }
 
@@ -84,8 +84,8 @@ func handleRPC(w webview.WebView, data string) {
 			followersCountStr = strconv.Itoa(len(user.Followers))
 			followers = user.Followers
 			topRepos = user.TopRepos
-			avatar   = user.Avatar
-		} 
+			avatar = user.Avatar
+		}
 		updateField(w, "Repos Count", reposCountStr)
 		updateField(w, "User", userStr)
 		updateField(w, "Followers", followersCountStr)
@@ -103,10 +103,10 @@ func RunGui() {
 		Resizable:              false,
 		URL:                    "data:text/html," + url.PathEscape(indexHTML),
 		ExternalInvokeCallback: handleRPC,
-		Debug: true,
+		Debug:                  true,
 	})
 	w.SetColor(255, 255, 255, 255)
 	defer w.Exit()
 	w.Run()
-	
+
 }
