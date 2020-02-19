@@ -63,7 +63,8 @@ func updateAvatar(w webview.WebView, image []byte) {
 		if err != nil {
 			log.Fatal(err)
 		}
-		jsCode = fmt.Sprintf(`document.getElementById("avatar").src = "%s";`, avatarPath)
+		jsCode = `document.getElementById("avatar").removeAttribute("hidden");`
+		jsCode += fmt.Sprintf(`document.getElementById("avatar").src = "%s";`, avatarPath)
 	} 
 	w.Eval(jsCode)
 
